@@ -1,0 +1,47 @@
+# --- Python 基础 ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# --- 虚拟环境 (最重要) ---
+.venv/
+venv/
+ENV/
+env/
+
+# --- uv 相关 ---
+# uv 会生成这些，但 .venv 是不需要提交的
+# 注意：uv.lock 和 pyproject.toml 应该提交，不要忽略它们！
+
+# --- 编辑器/IDE 相关 ---
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# --- 操作系统相关 ---
+.DS_Store
+Thumbs.db
+
+# --- 环境/敏感信息 ---
+.env
+*.log
