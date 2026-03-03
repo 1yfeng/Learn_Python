@@ -1,5 +1,6 @@
 import asyncio
 import time
+import httpx
 from utils.duration.async_logger import async_logger
 from utils.duration.logger import logger
 
@@ -26,3 +27,4 @@ class Processor:
         for i in range(5):
             tasks.append(self.async_mock_io_operation(id))
         await asyncio.gather(*tasks)
+
