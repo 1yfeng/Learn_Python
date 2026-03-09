@@ -72,41 +72,85 @@ class MarkdownProcessor:
         )
         print(f"[步骤 3/5] 切分器就绪（标题切分 + 递归字符切分）")
 
-        print(f"[步骤 4/5] 开始切分文档...")
+        # 三种切分策略的结果
+        chunks_recursive_only = []   # 策略A: 仅 RecursiveCharacterTextSplitter
+        chunks_header_only = []      # 策略B: 仅 MarkdownHeaderTextSplitter
+        chunks_combined = []         # 策略C: 先标题切分再递归切分（当前方式）
+
+        print(f"[步骤 4/5] 开始切分文档（三种策略对比）...")
         for i, (content, file_path) in enumerate(zip(raw_docs, file_paths)):
             file_name = os.path.basename(file_path)
-            splits_struct = header_splitter.split_text(content)
-            chunks = text_splitter.split_documents(splits_struct)
-            for chunk in chunks:
+
+            # 策略A: 仅 RecursiveCharacterTextSplitter
+            docs_for_recursive = [Document(page_content=content, metadata={"source": file_name})]
+            a_chunks = text_splitter.split_documents(docs_for_recursive)
+            chunks_recursive_only.extend(a_chunks)
+
+            # 策略B: 仅 MarkdownHeaderTextSplitter
+            b_splits = header_splitter.split_text(content)
+            for s in b_splits:
+                s.metadata["source"] = file_name
+            chunks_header_only.extend(b_splits)
+
+            # 策略C: 先标题切分 → 再递归切分
+            c_splits = header_splitter.split_text(content)
+            c_chunks = text_splitter.split_documents(c_splits)
+            for chunk in c_chunks:
                 chunk.metadata["source"] = file_name
                 final_chunks.append(chunk)
-            print(f"  [{i+1}/{len(raw_docs)}] {file_name}: 标题切分 {len(splits_struct)} 段 → 最终 {len(chunks)} 个切片")
+
+            print(f"  [{i+1}/{len(raw_docs)}] {file_name}:")
+            print(f"      A-递归切分: {len(a_chunks)} 个切片")
+            print(f"      B-标题切分: {len(b_splits)} 段")
+            print(f"      C-标题+递归: {len(c_chunks)} 个切片")
         
         # --- 验证结果 ---
-        print(f"[步骤 5/5] ✅ 最终生成 {len(final_chunks)} 个高质量切片")
-        if final_chunks:
-            print(f"  [切片示例] 元数据: {final_chunks[0].metadata}")
-            print(f"  [切片示例] 内容预览: {final_chunks[0].page_content[:150]}...")
-        return final_chunks
+        print(f"\n[步骤 5/5] ✅ 三种策略对比汇总:")
+        print(f"  A-仅递归切分 (RecursiveCharacterTextSplitter): {len(chunks_recursive_only)} 个切片")
+        print(f"  B-仅标题切分 (MarkdownHeaderTextSplitter):     {len(chunks_header_only)} 段")
+        print(f"  C-标题+递归 (先标题再递归):                     {len(final_chunks)} 个切片")
 
-    def print_chunks(self, chunks: list[Document], max_content_len: int = 200):
-        """输出所有切片的详细信息，方便调试查看。"""
+        # 统计各策略切片长度分布
+        for label, chunks_list in [("A-递归", chunks_recursive_only), ("B-标题", chunks_header_only), ("C-标题+递归", final_chunks)]:
+            if chunks_list:
+                lengths = [len(c.page_content) for c in chunks_list]
+                print(f"  [{label}] 长度: 最小={min(lengths)}, 最大={max(lengths)}, 平均={sum(lengths)//len(lengths)}")
+
+        return {
+            "recursive_only": chunks_recursive_only,
+            "header_only": chunks_header_only,
+            "combined": final_chunks,
+        }
+
+    def print_chunks(self, chunks: list[Document]):
+        """输出所有切片的完整内容，方便调试查看。"""
         print(f"\n{'='*80}")
         print(f"共 {len(chunks)} 个切片")
         print(f"{'='*80}")
         for i, chunk in enumerate(chunks):
-            print(f"\n--- 切片 #{i+1} ---")
+            print(f"\n--- 切片 #{i+1} ------------------------------------------------------------------------------------------------------------------------------------------")
             print(f"  元数据: {chunk.metadata}")
-            content_preview = chunk.page_content[:max_content_len]
-            if len(chunk.page_content) > max_content_len:
-                content_preview += "..."
             print(f"  长度: {len(chunk.page_content)} 字符")
-            print(f"  内容: {content_preview}")
+            print(f"  内容:\n{chunk.page_content}")
         print(f"\n{'='*80}")
         print(f"输出完毕，共 {len(chunks)} 个切片")
 
 
 if __name__ == "__main__":
     processor = MarkdownProcessor()
-    chunks = asyncio.run(processor.process(r"C:\Users\yufengli\OneDrive - Microsoft\Documents - IGS STCA\MPHP\pipeline_notes\Knowledge\DRIGuide"))
-    processor.print_chunks(chunks)
+    result = asyncio.run(processor.process(r"C:\Users\yufengli\OneDrive - Microsoft\Documents - IGS STCA\MPHP\pipeline_notes\Knowledge\DRIGuide"))
+
+    print("\n\n" + "🔹"*30)
+    print("策略A: 仅 RecursiveCharacterTextSplitter")
+    print("🔹"*30)
+    processor.print_chunks(result["recursive_only"])
+
+    print("\n\n" + "🔸"*30)
+    print("策略B: 仅 MarkdownHeaderTextSplitter")
+    print("🔸"*30)
+    processor.print_chunks(result["header_only"])
+
+    print("\n\n" + "🔶"*30)
+    print("策略C: MarkdownHeaderTextSplitter + RecursiveCharacterTextSplitter")
+    print("🔶"*30)
+    processor.print_chunks(result["combined"])
