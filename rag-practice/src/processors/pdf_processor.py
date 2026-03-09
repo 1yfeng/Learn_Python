@@ -1,4 +1,5 @@
 import os
+import sys
 import warnings
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_core.documents import Document
@@ -96,7 +97,7 @@ class PdfProcessor:
 
     
     # ai generate 
-    def print_chunks(self, chunks: list[Document], max_display: int = 100):
+    def print_chunks(self, chunks: list[Document], max_display: int = sys.maxsize):
         """输出所有切片完整内容"""
         print(f"\n{'='*80}")
         print(f"共 {len(chunks)} 个切片")
@@ -114,7 +115,7 @@ class PdfProcessor:
 if __name__ == "__main__":
     processor = PdfProcessor()
     result = processor.process(r"C:\Users\yufengli\my_work_space\Resources", start_page=3, end_page=192)
-    processor.print_chunks(result["recursive"])
+    processor.print_chunks(result["recursive"], 50)
 
 
 
