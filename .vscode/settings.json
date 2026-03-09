@@ -7,6 +7,10 @@
     "python.testing.pytestEnabled": true,
     "python.testing.cwd": "${workspaceFolder}/asyncio-practice",
     "python.analysis.extraPaths": [
-        "${workspaceFolder}/asyncio-practice/src"
-    ]
+        "${workspaceFolder}/asyncio-practice/src",
+        "${workspaceFolder}/rag-practice/src"
+    ],
+    "terminal.integrated.env.windows": {
+        "PYTHONPATH": "${workspaceFolder}/rag-practice/src;${workspaceFolder}/asyncio-practice/src"
+    }
 }

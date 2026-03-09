@@ -5,5 +5,13 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "github-copilot-sdk>=0.1.30",
+    "langchain>=1.2.10",
+    "langchain-community>=0.4.1",
+    "langchain-text-splitters>=1.1.1",
     "numpy>=2.4.2",
+    "sentence-transformers>=5.2.3",
 ]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
