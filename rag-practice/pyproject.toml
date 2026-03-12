@@ -8,8 +8,10 @@ dependencies = [
     "github-copilot-sdk>=0.1.30",
     "langchain>=1.2.10",
     "langchain-community>=0.4.1",
+    "langchain-huggingface>=1.2.1",
     "langchain-text-splitters>=1.1.1",
     "numpy>=2.4.2",
+    "pymilvus>=2.6.9",
     "pypdf>=6.7.5",
     "sentence-transformers>=5.2.3",
 ]
