@@ -1,9 +1,13 @@
 import os
 import sys
+import asyncio
 import warnings
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
+
+from src.processors.embedding_processor import EmbeddingProcessor
+from src.clients.milvus_client import MilvusClient
 
 class PdfProcessor:
 
@@ -44,7 +48,7 @@ class PdfProcessor:
                 print(f"  ⚠️ 跳过第 {i+1} 页: {e}")
         return pages
     
-    def process(self, pdf_folder: str, start_page: int = None, end_page: int = None):
+    async def process(self, pdf_folder: str, start_page: int = None, end_page: int = None):
         # --- 步骤 1: 扫描 PDF ---
         print(f"[步骤 1] 扫描目录: {pdf_folder}")
         pdf_paths = self.get_pdf_paths(pdf_folder)
@@ -89,12 +93,21 @@ class PdfProcessor:
                 lengths = [len(c.page_content) for c in chunks]
                 print(f"  [{label}] 长度: 最小={min(lengths)}, 最大={max(lengths)}, 平均={sum(lengths)//len(lengths)}")
 
-        return {
-            "page_only": chunks_page_only,
-            "recursive": chunks_recursive,
-        }
+        
+        embedder = EmbeddingProcessor()
+        milvus = MilvusClient()
 
+        # be careful list order！！！！
+        texts = [chunk.page_content  for chunk in chunks_recursive]
+        metadatas = [chunk.metadata  for chunk in chunks_recursive]
+        
+        vectors = embedder.embed_text(texts)
 
+        collection_name = "pdf_chunks_recursive_collection"
+        await milvus.create_collection(name=collection_name, dim=embedder.get_dim())
+        await milvus.insert(collection_name, vectors, texts, metadatas)
+     
+        return 
     
     # ai generate 
     def print_chunks(self, chunks: list[Document], max_display: int = sys.maxsize):
@@ -114,10 +127,6 @@ class PdfProcessor:
 
 if __name__ == "__main__":
     processor = PdfProcessor()
-    result = processor.process(r"C:\Users\yufengli\my_work_space\Resources", start_page=3, end_page=192)
-    processor.print_chunks(result["recursive"], 50)
-
-
-
-
+    asyncio.run(processor.process(r"C:\Users\yufengli\my_work_space\Resources", start_page=3, end_page=192))
+    
     
