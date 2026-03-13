@@ -33,7 +33,7 @@ class MilvusClient:
             collection_name = collection_name,
             data = [query_vector],
             limit = limit,
-            output_fields = ["text", "metadata"]
+            output_fields = ["text", "metadata", "vector"]
         )
         return results
     
