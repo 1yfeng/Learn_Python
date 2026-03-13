@@ -12,6 +12,7 @@ class MilvusClient:
         data = []
         for i, (vec, text) in enumerate(zip(vectors, texts)):
             row = {
+                "id": i,
                 "vector": vec,
                 "text": text
             }

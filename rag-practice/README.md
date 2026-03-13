@@ -16,3 +16,7 @@ rag-practice/
     │   └── copilot_client_enricher.py
     └── processors/
         └── markdown_processor.py
+
+
+
+embedding  HuggingFaceEmbeddings   model_name =shibing624/text2vec-base-chinese
