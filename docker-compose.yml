@@ -40,3 +40,13 @@ services:
     depends_on:
       - "etcd"
       - "minio"
+  
+  attu:  # <--- 将这段代码添加到 standalone 下方，保持缩进一致
+    container_name: milvus-attu
+    image: zilliz/attu:latest
+    ports:
+      - "8000:3000"
+    environment:
+      MILVUS_URL: standalone:19530
+    depends_on:
+      - standalone

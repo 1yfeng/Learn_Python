@@ -56,9 +56,13 @@ class PdfProcessor:
 
         print(f"[步骤 2] 加载 PDF 内容...")
         all_pages: list[Document] = []
-        for pdf__path in pdf_paths:
+        for i, pdf__path in enumerate(pdf_paths, 1):
+            file_name = os.path.basename(pdf__path)
+            file_size = os.path.getsize(pdf__path) / 1024 / 1024  # MB
+            print(f"  [{i}/{len(pdf_paths)}] 正在加载: {file_name} ({file_size:.1f} MB)...", end=" ", flush=True)
             pages = self.load_pdf(pdf__path)
             all_pages.extend(pages)
+            print(f"✔ {len(pages)} 页")
 
         print(f"[步骤 2] 加载完成，共 {len(all_pages)} 页")
 
@@ -92,20 +96,31 @@ class PdfProcessor:
             if chunks:
                 lengths = [len(c.page_content) for c in chunks]
                 print(f"  [{label}] 长度: 最小={min(lengths)}, 最大={max(lengths)}, 平均={sum(lengths)//len(lengths)}")
-
-        
+ 
+        print(f"\n[步骤 3] 初始化 Embedding 模型和 Milvus 客户端...")
         embedder = EmbeddingProcessor()
         milvus = MilvusClient()
+        print(f"[步骤 3] Embedding 模型: {embedder.model.model_name}, 维度: {embedder.get_dim()}")
+        print(f"[步骤 3] Milvus 连接就绪")
 
         # be careful list order！！！！
+        print(f"\n[步骤 4] 准备数据...")
         texts = [chunk.page_content  for chunk in chunks_recursive]
         metadatas = [chunk.metadata  for chunk in chunks_recursive]
+        print(f"[步骤 4] texts: {len(texts)} 条, metadatas: {len(metadatas)} 条")
         
+        print(f"\n[步骤 5] 生成向量 (共 {len(texts)} 条文本)...")
         vectors = embedder.embed_text(texts)
+        print(f"[步骤 5] 向量生成完成, 共 {len(vectors)} 个, 维度: {len(vectors[0]) if vectors else 'N/A'}")
 
         collection_name = "pdf_chunks_recursive_collection"
+        print(f"\n[步骤 6] 创建 Milvus Collection: '{collection_name}'...")
         await milvus.create_collection(name=collection_name, dim=embedder.get_dim())
+        print(f"[步骤 6] Collection 创建完成")
+
+        print(f"\n[步骤 7] 写入 Milvus (共 {len(vectors)} 条记录)...")
         await milvus.insert(collection_name, vectors, texts, metadatas)
+        print(f"[步骤 7] ✅ 写入完成!")
      
         return 
     
