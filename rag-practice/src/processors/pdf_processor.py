@@ -1,6 +1,8 @@
 import os
 import sys
 import asyncio
+import threading
+import time
 import warnings
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_core.documents import Document
@@ -10,6 +12,16 @@ from src.processors.embedding_processor import EmbeddingProcessor
 from src.clients.milvus_client import MilvusClient
 
 class PdfProcessor:
+
+    def _spinner(self, stop_event: threading.Event, prefix: str = ""):
+        """后台线程：显示动态 loading 动画"""
+        frames = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
+        idx = 0
+        while not stop_event.is_set():
+            print(f"\r{prefix} {frames[idx % len(frames)]}", end="", flush=True)
+            idx += 1
+            time.sleep(0.1)
+        print(f"\r{prefix}   ", end="\r", flush=True)  # 清除 spinner
 
     def get_pdf_paths(self, pdf_folder: str):
         paths = []
@@ -59,10 +71,15 @@ class PdfProcessor:
         for i, pdf__path in enumerate(pdf_paths, 1):
             file_name = os.path.basename(pdf__path)
             file_size = os.path.getsize(pdf__path) / 1024 / 1024  # MB
-            print(f"  [{i}/{len(pdf_paths)}] 正在加载: {file_name} ({file_size:.1f} MB)...", end=" ", flush=True)
+            prefix = f"  [{i}/{len(pdf_paths)}] 正在加载: {file_name} ({file_size:.1f} MB)..."
+            stop_event = threading.Event()
+            spinner_thread = threading.Thread(target=self._spinner, args=(stop_event, prefix), daemon=True)
+            spinner_thread.start()
             pages = self.load_pdf(pdf__path)
+            stop_event.set()
+            spinner_thread.join()
             all_pages.extend(pages)
-            print(f"✔ {len(pages)} 页")
+            print(f"{prefix} ✔ {len(pages)} 页")
 
         print(f"[步骤 2] 加载完成，共 {len(all_pages)} 页")
 
