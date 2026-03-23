@@ -9,7 +9,7 @@ from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 from src.processors.embedding_processor import EmbeddingProcessor
-from src.clients.milvus_client import MilvusClient
+from clients.async_milvus_client import AsyncMilvusClient
 
 class PdfProcessor:
 
@@ -116,7 +116,7 @@ class PdfProcessor:
  
         print(f"\n[步骤 3] 初始化 Embedding 模型和 Milvus 客户端...")
         embedder = EmbeddingProcessor()
-        milvus = MilvusClient()
+        milvus = AsyncMilvusClient()
         print(f"[步骤 3] Embedding 模型: {embedder.model.model_name}, 维度: {embedder.get_dim()}")
         print(f"[步骤 3] Milvus 连接就绪")
 

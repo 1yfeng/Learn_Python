@@ -4,7 +4,7 @@ import time
 print("[Init] 加载 Embedding 模块...", flush=True)
 from src.processors.embedding_processor import EmbeddingProcessor
 print("[Init] 加载 Milvus 客户端模块...", flush=True)
-from src.clients.milvus_client import MilvusClient
+from clients.async_milvus_client import AsyncMilvusClient
 print("[Init] 模块加载完成")
 
 
@@ -16,7 +16,7 @@ class QueryProcessor:
         self.embedder = EmbeddingProcessor()
         print(f"[Init] Embedding 模型加载完成 ({time.time() - t0:.1f}s)")
         print("[Init] 连接 Milvus...", flush=True)
-        self.milvus = MilvusClient()
+        self.milvus = AsyncMilvusClient()
         print("[Init] Milvus 连接就绪")
 
     async def query(self, question: str, collection_name: str = "pdf_chunks_recursive_collection", top_k: int = 3):

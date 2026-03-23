@@ -1,8 +1,8 @@
-from pymilvus import MilvusClient as PyMilvusClients
+from pymilvus import MilvusClient
 import asyncio 
-class MilvusClient:
+class AsyncMilvusClient:
     def __init__(self, uri = "http://localhost:19530"):
-        self.client = PyMilvusClients(uri)
+        self.client = MilvusClient(uri)
 
     async def create_collection(self, name: str, dim: int):
         await asyncio.to_thread(self.client.create_collection, collection_name=name, dimension=dim)
